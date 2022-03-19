@@ -1,0 +1,5 @@
+online inventory control 
+
+businesses can login and register
+
+after logging in they can check for the inventory for that particular
