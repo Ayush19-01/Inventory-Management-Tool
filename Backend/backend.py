@@ -1,7 +1,28 @@
 import mysql.connector as mysql
 
+class UserTableInstance:
 
-class connection_api:
+	def __init__(self, username):
+
+		self.connection = mysql.connect(user='root',password='ayush123')
+		self.cursor = self.connection.cursor()
+		self.cursor.execute("use inventory_man")
+		self.extract_data(username[1:-1])
+		
+	def extract_data(self,username):
+
+		self.cursor.execute(f"select * from {username}")
+		self.data = self.cursor.fetchall()
+		print(self.data)
+
+
+	#def add_data(self, usrname):
+
+
+	#def modify_data(self, username):
+
+
+class ConnectionAPI:
 
 	def __init__(self):
 
@@ -23,6 +44,8 @@ class connection_api:
 
 		if x[0][2] == password:
 			print("Access Granted")
+			self.close_conn()
+			self.user_table_instance = UserTableInstance(username)
 
 		else:
 			print("incorrect credentials")
@@ -49,6 +72,7 @@ class connection_api:
 
 	def post_into_user_metadata(self):
 
+		
 		l = (input("Enter your name: "), input("Enter your username: "), input("Enter a password: ") ,input("Enter your email-id: "))
 		
 
@@ -57,9 +81,20 @@ class connection_api:
 
 			self.commit_changes()
 
-		except mysql.errors.IntegrityError:
+			self.inventory_creation(l[1])
+
+		except mysql.errors.IntegrityError as err:
+
+			print(err)
 
 			print("User Name already exists!!")
+
+	def inventory_creation(self, usr):
+
+		self.connection.execute(f"create table {usr} (id int primary key, item_name varchar(100) not null, purchase_date datetime not null, reference_id int unique not null, quantity int not null, price_per_unit float(20,4)) not null, total_price float(30,4)")
+
+		self.commit_changes()
+
 
 
 	def close_conn(self):
@@ -68,7 +103,7 @@ class connection_api:
 
 def main():
 
-	main_conn = connection_api()
+	main_conn = ConnectionAPI()
 
 	while True:
 
@@ -82,8 +117,9 @@ def main():
 			main_conn.check_user_credentials("'Ayush19_1'","Ayush@123")
 
 		elif ch == "3":
-
-			print(main_conn.get_user_data("name", "'Ayush Sharma'"))
+			a = input("Enter your username: ")
+			
+			print(main_conn.get_user_data("username", f"'{a}'"))
 
 		elif ch == "4":
 
