@@ -1,22 +1,60 @@
 import mysql.connector as mysql
 
-class UserTableInstance:
+class InventoryInstance:
 
 	def __init__(self, username):
 
 		self.connection = mysql.connect(user='root',password='ayush123')
 		self.cursor = self.connection.cursor()
 		self.cursor.execute("use inventory_man")
-		self.extract_data(username[1:-1])
 		
 	def extract_data(self,username):
 
-		self.cursor.execute(f"select * from {username}")
+		self.current_table =[]
+		self.username = username
+		self.cursor.execute(f"select * from inventory i join items t on i.username=t.username and i.item_id=t.item_id where i.username='{username}'")
 		self.data = self.cursor.fetchall()
-		print(self.data)
+		for i in self.data:
+			m = []
+			for j in i:
+
+				if j not in m:
+					m.append(j)
+			self.current_table.append(m)
+		return self.current_table
+
+			
+
+	"""MainWindow.resize(800, 500)
+        MainWindow.setFixedSize(800, 350)"""
+
+	def add_data(self, l):
+		x = l[0]
+		y = l[1]
+		z = l[4]
+		a = l[2]
+		b = l[3]
+
+		try:
+			self.cursor.execute(f"insert into inventory values('{self.username}','{x}',{b})")
+			self.cursor.execute(f"insert into items values('{self.username}','{x}','{y}',{z},'{a}')")
+			self.cursor.execute("commit")
+			return 1
+		except:
+			return 0
+
+		return 0
 
 
-	#def add_data(self, usrname):
+	def del_data(self,itm_c):
+		
+		try:
+			self.cursor.execute(f"delete from items where username='{self.username}' and item_id='{itm_c}'")
+			self.cursor.execute(f"delete from inventory where username='{self.username}' and item_id='{itm_c}'")
+			self.cursor.execute("commit")
+			return 1
+		except:
+			return 0
 
 
 	#def modify_data(self, username):
@@ -39,16 +77,20 @@ class ConnectionAPI:
 
 	
 	def check_user_credentials(self,username,password):
+		username1 = f"'{username}'"
+		x = self.get_user_data("username", username1)
+		if not len(x) == 0:
+			if x[0][2] == password:
+				print("Access Granted")
+				self.close_conn()
+				self.user_table_instance = InventoryInstance(username)
+				return 1
 
-		x = self.get_user_data("username", username)
-
-		if x[0][2] == password:
-			print("Access Granted")
-			self.close_conn()
-			self.user_table_instance = UserTableInstance(username)
-
+			else:
+				print("incorrect credentials")
+				return 0
 		else:
-			print("incorrect credentials")
+			print("Incorrect Username")
 
 
 
@@ -70,18 +112,17 @@ class ConnectionAPI:
 
 
 
-	def post_into_user_metadata(self):
+	def post_into_user_metadata(self, user, pass1, name,email):
 
 		
-		l = (input("Enter your name: "), input("Enter your username: "), input("Enter a password: ") ,input("Enter your email-id: "))
 		
 
 		try:
-			self.cursor.execute("insert into user_data values(%s,%s,%s,%s)",l)
+			self.cursor.execute(f"insert into user_data values('{name}','{user}','{pass1}','{email}')")
 
 			self.commit_changes()
 
-			self.inventory_creation(l[1])
+			return 1
 
 		except mysql.errors.IntegrityError as err:
 
@@ -89,12 +130,9 @@ class ConnectionAPI:
 
 			print("User Name already exists!!")
 
-	def inventory_creation(self, usr):
+			return 0
 
-		self.connection.execute(f"create table {usr} (id int primary key, item_name varchar(100) not null, purchase_date datetime not null, reference_id int unique not null, quantity int not null, price_per_unit float(20,4)) not null, total_price float(30,4)")
-
-		self.commit_changes()
-
+		return 0
 
 
 	def close_conn(self):
@@ -116,6 +154,7 @@ def main():
 
 			main_conn.check_user_credentials("'Ayush19_1'","Ayush@123")
 
+
 		elif ch == "3":
 			a = input("Enter your username: ")
 			
@@ -128,9 +167,4 @@ def main():
 		else:
 			main_conn.close_conn()
 			break
-
-if __name__ == "__main__":
-
-	main()
-
 
